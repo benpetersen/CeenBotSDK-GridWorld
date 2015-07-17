@@ -1,0 +1,217 @@
+/* maneuver around an obstacle in rel front to node on other side
+   -- decisions are based on current position and orientation of robot */
+void avoid(void)
+{
+	int count1 = 0, count2 = 0, i, j;
+
+	/* check to see if we are on a border space */
+	if ((current[0] == 0 && direction == LEFT)				/* upper row, facing left */
+	 || (current[0] == NUM_ROWS - 1 && direction == RIGHT)	/* lower row, facing right */
+	 || (current[1] == 0 && direction == DOWN)				/* left-most column, facing down */
+	 || (current[1] == NUM_COLS - 1 && direction == UP)	)	/* right-most column, facing up */
+	{
+		maneuverLeft();
+	}
+	else if ((current[0] == 0 && direction == RIGHT)			/* upper row, facing right */
+		  || (current[0] == NUM_ROWS - 1 && direction == LEFT)	/* lower row, facing left */
+		  || (current[1] == 0 && direction == UP)				/* left-most column, facing up */
+		  || (current[1] == NUM_COLS - 1 && direction == DOWN))	/* right-most column, facing down */
+	{
+		maneuverRight();
+	}
+	else /* not on a border */
+	{
+		if (direction == UP || direction == DOWN)
+		{
+			for (i = 0; i < NUM_ROWS; ++i)
+			{
+				/* count unvisited nodes to left of current position */
+				for (j = 0; j < current[1]; ++j)
+				{
+					if (grid[i][j] == UNVISITED)
+						++count1;
+				}
+
+				/* count unvisited nodes to right of current position */
+				for (j = current[1] + 1; j < NUM_COLS; ++j)
+				{
+					if (grid[i][j] == UNVISITED)
+						++count2;
+				}
+			}
+
+			/* choose maneuver */
+			if (count1 > count2) /* left has more unvisited nodes */
+			{
+				if (direction == DOWN)
+					maneuverRight();
+				else /* direction == UP */
+					maneuverLeft();
+			}
+			else /* right has more unvisited nodes */
+			{
+				if (direction == DOWN)
+					maneuverLeft();
+				else /* direction == UP */
+					maneuverRight();
+			}
+		}
+		else /* direction == LEFT || direction == RIGHT */
+		{
+			for (i = 0; i < NUM_ROWS; ++i)
+			{
+				if (i != current[0])
+				{
+					/* count unvisited nodes to top of current position */
+					for (j = 0; j < NUM_COLS; ++j)
+					{
+						if (grid[i][j] == UNVISITED)
+						{
+							if (i < current[0]) // rows above current
+							{
+								++count1;
+							}
+							else // rows below current
+							{
+								++count2;
+							}
+						}
+					}
+				}
+			}
+
+			if (count1 > count2) /* top has more unvisited nodes */
+			{
+				if (direction == LEFT)
+					maneuverRight();
+				else /* direction == RIGHT */
+					maneuverLeft();
+			}
+			else /* bottom has more unvisited nodes */
+			{
+				if (direction == LEFT)
+					maneuverLeft();
+				else /* direction == RIGHT */
+					maneuverRight();
+			}
+		} /* if-else */
+	}
+
+	return;
+}
+
+/* maneuvers around an obstacle directly in front of it to get to the node on the other side --
+   the robot turns rel right and moves around the obstacle while keeping the obstacle on its rel left */
+void maneuverRight(void)
+{
+	int destination[2];
+
+	/* set row and col number of destination node */
+	if (direction == UP)
+	{
+		destination[0] = current[0] - 1;
+		destination[1] = current[1];
+	}
+	else if (direction == DOWN)
+	{
+		destination[0] = current[0] + 1;
+		destination[1] = current[1];
+	}
+	else if (direction == LEFT)
+	{
+		destination[0] = current[0];
+		destination[1] = current[1] - 1;
+	}
+	else /* direction == RIGHT */
+	{
+		destination[0] = current[0];
+		destination[1] = current[1] + 1;
+	}
+
+	/* turn rel right */
+	turnRight();
+	do
+	{
+		/* rel left is unblocked --> have reached edge of obstacle --> turn left and move forward */
+		if (segRel(LEFT) == UNBLOCKED)
+		{
+			turnLeft();
+			moveForward();
+
+			/* check to see if on border */
+		}
+		/* rel left is blocked and rel front is blocked --> turn rel right to continue to avoid obstacle */
+		else if (segRel(FRONT) == BLOCKED)
+		{
+			turnRight();
+		}
+		/* rel left is blocked and rel front is unblocked --> continue moving along side of obstacle */
+		else
+		{
+			moveForward();
+
+			/* check to see if on border */
+		}
+
+	} while ((current[0] != destination[0] || current[1] != destination[1]) && foundRedNode == FALSE);
+
+	return;
+}
+
+/* maneuvers around an obstacle directly in front of it to get to the node on the other side --
+   the robot turns rel left and moves around the obstacle while keeping the obstacle on its rel right */
+void maneuverLeft(void)
+{
+	int destination[2];
+
+	/* set row and col number of destination node */
+	if (direction == UP)
+	{
+		destination[0] = current[0] - 1;
+		destination[1] = current[1];
+	}
+	else if (direction == DOWN)
+	{
+		destination[0] = current[0] + 1;
+		destination[1] = current[1];
+	}
+	else if (direction == LEFT)
+	{
+		destination[0] = current[0];
+		destination[1] = current[1] - 1;
+	}
+	else /* direction == RIGHT */
+	{
+		destination[0] = current[0];
+		destination[1] = current[1] + 1;
+	}
+
+	/* turn rel right */
+	turnLeft();
+	do
+	{
+		/* rel right is unblocked --> have reached edge of obstacle --> turn right and move forward */
+		if (segRel(RIGHT) == UNBLOCKED)
+		{
+			turnRight();
+			moveForward();
+
+			/* check to see if on border */
+		}
+		/* rel right is blocked and rel front is blocked --> turn rel left to continue to avoid obstacle */
+		else if (segRel(FRONT) == BLOCKED)
+		{
+			turnLeft();
+		}
+		/* rel right is blocked and rel front is unblocked --> continue moving along side of obstacle */
+		else
+		{
+			moveForward();
+
+			/* check to see if on border */
+		}
+
+	} while ((current[0] != destination[0] || current[1] != destination[1]) && foundRedNode == FALSE);
+
+	return;
+}

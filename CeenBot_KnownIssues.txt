@@ -1,0 +1,3 @@
+THESE ARE CURRENT KNOWN ISSUES:
+
+Having to backtrack through more than 1 column in the moveToRightColumn function causes an infinite loop if not traversing through a bottleneck (1-row wide path). See 'TEST 6' in the initializeTestVariables function for an example of a case that uncovers the bug.

@@ -1,0 +1,59 @@
+Terminology:
+============
+node:	 physical rectangular space where robot can go
+segment: boundary between nodes; there are horizontal nodes and veritcal nodes
+
+Global Constants:
+=================
+#define NUM_ROWS 7 	/* number of rows in grid-world */
+#define NUM_COLS 6	/* number of columns in grid-world */
+#define MOVE_TIME ###	/* amount of time to move to first node ahead */
+#define TURN_TIME ###	/* amount of time to turn 90 degrees */
+
+ADT's:
+======
+typedef enum {NONE, UP, DOWN, LEFT, RIGHT} Direction; /* where is NONE used? */
+
+Storage variables:
+==================
+// UPDATE AFTER TURNING:
+Direction direction; // stores current direction
+// UPDATE AT EACH NEW NODE:
+int currentNode[2];  // [0]: current row, [1]: current column
+bool grid[NUM_ROWS][NUM_COLS]; // false -- have not visited
+bool horizSeg[NUM_ROWS + 1][NUM_COLS]; // horizontal segments, true = blocked
+bool vertSeg[NUM_ROWS][NUM_COLS + 1];  // vertical segments, true = blocked
+
+Sensors:
+========
+// TO SENSE VINYL: true -- vinyl is sensed underneath robot
+bool color_s, 	// for red square underneath robot
+     bottomL_s,	// for vinyl on the front-left
+     bottomR_s;	// for vinyl on the front-right
+// TO SENSE BLOCKS: true -- block is sensed in adjacent segment
+bool left_s,  	// for blocks to the left
+     right_s, 	// for blocks to the right
+     frontL_s,	// for blocks to the front-left
+     frontR_s;	// for blocks to the front-right
+
+Initialization:
+===============
+direction = DOWN;
+currentNode[0] = 0; currentNode[1] = 0;
+
+// initialize vertical segments
+vertSeg[][] = false;
+for (int i = 0; i < NUM_ROWS; ++i)
+{
+	vertSeg[i][0] = true;
+	vertSeg[i][NUM_ROWS - 1] = true;
+}
+// initialize horizontal segments
+horizSeg[][] = false;
+for (int i = 0; i < NUM_COLS; ++i)
+{
+	horizSeg[0][i] = true;
+	horizSeg[NUM_COLS - 1][i] = true;
+}
+
+If one of the light sensors facing down is black and the other other is white, then the robot is off center, tilted toward the side with the sensor that is white.
